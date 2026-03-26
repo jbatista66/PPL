@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PPL Plan">
+<meta name="theme-color" content="#1a1a2e">
+<title>PPL The Program — Mein Trainingsplan</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #c0392b;
+    --accent2: #e74c3c;
+    --text: #eee;
+    --muted: #8899aa;
+    --green: #27ae60;
+    --yellow: #f39c12;
+    --blue: #2980b9;
+    --border: #2a3a5e;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--accent), #8e1a1a);
+    padding: 24px 32px;
+    text-align: center;
+  }
+  .header h1 { font-size: 28px; font-weight: 800; letter-spacing: 1px; }
+  .header p { color: rgba(255,255,255,0.8); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>PPL<sup>The</sup>Program — Mein Trainingsplan</h1>
+  <p>Block #1 &amp; #2 — 10 Wochen Periodisierung — Personalisierte Gewichte</p>
+</div>
+<div id="app"></div>
+<script>
+// ===== 1RM DATA =====
+const oneRM = {
+  kreuzheben: 72.0,
+  bankdruecken: 34.7,
+  ueberkopfdruecken: 42.0,
+  pendlayRows: 38.0,
+  schraegbankdruecken: 32.0,
+  kniebeuge: 66.7
+};
+
+function rnd(kg) {
+  return Math.round(kg * 4) / 4; // round to nearest 0.25
+}
+function pct(lift, p) {
+  return rnd(oneRM[lift] * p / 100);
+}
+
+// ===== WEEK DEFINITIONS =====
+// Each week: { block, week, label, days: [ { title, exercises: [ {name, sets, reps, pctOf?, pct?, rest, tempo, note?} ] } ] }
+const weeks = [
+// BLOCK 1 - WEEK 1 (Einstiegswoche)
+{ block:1, week:1, label:"Einstiegswoche", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:70,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-10",rest:"1",tempo:"2/1/1/1"},
+    {name:"Planks",sets:2,reps:"1 min.",rest:"1",tempo:"-"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:70,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:70,rest:"2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Frenchpress",sets:3,reps:"8-10",rest:"1-2",tempo:"1/1/1/0"},
+    {name:"Einarmiges Trizepsdrücken am Kabelturm",sets:"je 2",reps:"10-12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:70,rest:"2",tempo:"2/0/1/1"},
+    {name:"Latzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextension",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:3,reps:"8-10",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Eingedrehte Bizepscurls KH",sets:2,reps:"8-10",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Hack Squats",sets:3,reps:"6-8",rest:"2",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"HIP Thrust",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Wadenheben sitzend",sets:4,reps:"8-12",rest:"1",tempo:"2/1/1/1"},
+    {name:"Beinheben",sets:2,reps:"AMRAP",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:70,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Seitheben",sets:4,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Trizeps Pushdowns mit Seil",sets:3,reps:"8-10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Kick Backs am Kabelturm",sets:"je 2",reps:"12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 2",reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]}
+]},
+// BLOCK 1 - WEEK 2
+{ block:1, week:2, label:"Woche 2", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:75,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz mit Myo Reps: kurze Pause & dann 3 Wdh. zusätzlich"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-10",rest:"1",tempo:"2/1/1/1"},
+    {name:"Planks",sets:2,reps:"1:10 min.",rest:"1",tempo:"-"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:75,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:75,rest:"2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz mit Myo Reps: kurze Pause & dann 3 Wdh. zusätzlich"},
+    {name:"Frenchpress",sets:3,reps:"8-10",rest:"1-2",tempo:"1/1/1/0"},
+    {name:"Trizeps Pushdowns mit einer Stange",sets:2,reps:"10-12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:75,rest:"2",tempo:"2/0/1/1"},
+    {name:"Klimmzug",sets:3,reps:"6",rest:"2",tempo:"2/1/1/1",note:"1¼ Wiederholungen"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextension",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:3,reps:"8-10",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Eingedrehte Bizepscurls KH",sets:2,reps:"8-10",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Kniebeuge",sets:4,reps:"6",pctOf:"kniebeuge",pct:75,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Abduktion",sets:3,reps:"12",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Wadenheben sitzend",sets:4,reps:"8-12",rest:"1",tempo:"2/1/1/1"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:75,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:2,reps:"*",rest:"1-2",tempo:"1/1/1/1",note:"* so viele wie möglich über 2 Sätze in je 40 sek."},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Enges Bankdrücken",sets:3,reps:"8-10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Einarmige Kick Backs am Kabelturm",sets:"je 2",reps:"12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1",note:"Letzter Satz als Dropsatz"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 2",reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]}
+]},
+// BLOCK 1 - WEEK 3
+{ block:1, week:3, label:"Woche 3", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:77.5,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz AMRAP"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-10",rest:"1",tempo:"2/1/1/1"},
+    {name:"Crunches",sets:2,reps:"12",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:77.5,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:77.5,rest:"2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Frenchpress",sets:3,reps:"8-10",rest:"1-2",tempo:"1/1/1/0"},
+    {name:"Einarmiges Trizepsdrücken am Kabelturm",sets:"je 2",reps:"10-12",rest:"1",tempo:"2/0/1/1",note:"Letzter Satz als Dropsatz"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:77.5,rest:"2",tempo:"2/0/1/1"},
+    {name:"Latzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextension",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:3,reps:"8-10",rest:"1",tempo:"2/0/1/1"},
+    {name:"Eingedrehte Bizepscurls KH",sets:2,reps:"21er",rest:"1",tempo:"1/0/1/1",note:"7 oben, 7 unten, 7 ganze"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Hack Squats",sets:3,reps:"6-8",rest:"2",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"8",rest:"2",tempo:"3/1/1/0",note:"Negative Kadenz: 3 Sek."},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"HIP Thrust",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Wadenheben sitzend",sets:4,reps:"8-12",rest:"1",tempo:"2/1/1/1"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:77.5,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:3,reps:"AMRAP in 40 sek.",rest:"1-2",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Enges Bankdrücken",sets:3,reps:"8-10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Einarmige Kick Backs am Kabelturm",sets:"je 2",reps:"12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz als Dropsatz"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 2",reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]}
+]},
+// BLOCK 1 - WEEK 4
+{ block:1, week:4, label:"Woche 4", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:80,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"?",reps:"40",rest:"1",tempo:"1/0/1/1",note:"40 Gesamtwiederholungen"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-10",rest:"1",tempo:"2/1/1/1"},
+    {name:"Crunches",sets:2,reps:"12",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:80,rest:"3",tempo:"2/1/1/1",note:"Letzter Satz als AMRAP"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:80,rest:"2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz mit 2 Myo Reps Sätze: kurze Pause, dann 2x 3 Wdh. zusätzlich"},
+    {name:"Enges Bankdrücken",sets:3,reps:"8-10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Einarmiges Trizepsdrücken am Kabelturm",sets:"je 3",reps:"10-12",rest:"1",tempo:"2/0/1/1"},
+    {name:"Liegestütze",sets:2,reps:"AMRAP",rest:"1-2",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:80,rest:"2-3",tempo:"2/0/1/1",note:"Letzter Satz als Dropsatz (50% vom Arbeitsgewicht – damit AMRAP)"},
+    {name:"Klimmzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Überzüge",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:7,reps:"7",rest:"30sek",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Kniebeuge",sets:3,reps:"6-8",rest:"2",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:"je 1",reps:"*",rest:"1-2",tempo:"1/0/1/0",note:"* So viele wie möglich (Zeit: 60 Sek. / Beinseite)"},
+    {name:"Abduktion",sets:3,reps:"12",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Wadenheben sitzend",sets:4,reps:"8-12",rest:"1",tempo:"2/1/1/1"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:80,rest:"3",tempo:"2/1/1/1",note:"Letzter Satz als Dropsatz (50% vom Arbeitsgewicht – damit AMRAP)"},
+    {name:"Brustpresse",sets:4,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:4,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Trizeps Pushdowns mit Seil",sets:7,reps:"7",rest:"30sek",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Seal Rows",sets:3,reps:"10",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 3",reps:"8-10",rest:"-",tempo:"1/0/1/1",note:"links, rechts ohne Pause"}
+  ]}
+]},
+// BLOCK 1 - WEEK 5 (Deload)
+{ block:1, week:5, label:"Woche 5 (Deload)", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:2,reps:"6",pctOf:"kreuzheben",pct:60,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-10",rest:"1",tempo:"2/1/1/1"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:2,reps:"6",pctOf:"bankdruecken",pct:60,rest:"2",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:2,reps:"6",pctOf:"ueberkopfdruecken",pct:60,rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Frenchpress",sets:4,reps:"8-10",rest:"1-2",tempo:"1/1/1/0"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:2,reps:"6",pctOf:"pendlayRows",pct:60,rest:"2",tempo:"2/0/1/1"},
+    {name:"Latzug",sets:3,reps:"6",rest:"2",tempo:"2/1/1/1"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextensions",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:4,reps:"8-10",rest:"1-2",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Kniebeuge",sets:3,reps:"6-8",rest:"2",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"HIP Thrust",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:2,reps:"6",pctOf:"schraegbankdruecken",pct:60,rest:"3",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Trizeps Pushdowns mit Seil",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Kick-Backs am Kabelturm",sets:"je 2",reps:"12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:2,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Arnold Curls",sets:"je 2",reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]}
+]},
+// BLOCK 2 - WEEK 6
+{ block:2, week:6, label:"Woche 6", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:75,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz als Myo Reps: kurze Pause, dann 3 Wdh. zusätzlich"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-10",rest:"1",tempo:"2/1/1/1"},
+    {name:"Planks",sets:2,reps:"1:10min",rest:"1",tempo:"-"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:75,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:75,rest:"2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz als Myo Reps: kurze Pause, dann 3 Wdh. zusätzlich"},
+    {name:"Frenchpress",sets:4,reps:"8-10",rest:"1-2",tempo:"1/1/1/0"},
+    {name:"Trizeps Pushdowns mit einer Stange",sets:2,reps:"10-12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:75,rest:"2",tempo:"2/0/1/1"},
+    {name:"Klimmzug",sets:3,reps:"6",rest:"2",tempo:"2/1/1/1",note:"1¼ Wiederholungen"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextensions",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:3,reps:"8-10",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Eingedrehte Bizepscurls KH",sets:2,reps:"8-10",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Kniebeuge",sets:3,reps:"6",rest:"2",tempo:"2/1/1/1",note:"1¼ Wiederholungen"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Abduktion",sets:3,reps:"12",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Wadenheben sitzend",sets:4,reps:"8-12",rest:"1",tempo:"2/1/1/1"},
+    {name:"Beinheben",sets:2,reps:"AMRAP",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:75,rest:"1-3",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:2,reps:"*",rest:"1-2",tempo:"1/1/1/1",note:"* so viele wie möglich über 2 Sätze in je 40 Sek."},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:4,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Trizepsdrücken hinter dem Kopf mit Seil",sets:3,reps:"8-10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Kick-Backs am Kabelturm",sets:"je 2",reps:"12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1",note:"Letzter Satz als Dropsatz"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 2",reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]}
+]},
+// BLOCK 2 - WEEK 7
+{ block:2, week:7, label:"Woche 7", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:77.5,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-8",rest:"1",tempo:"2/1/1/1"},
+    {name:"Planks",sets:2,reps:"1:20min",rest:"1",tempo:"-"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:77.5,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:77.5,rest:"2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Frenchpress",sets:3,reps:"8-10",rest:"1-2",tempo:"1/1/1/0"},
+    {name:"Einarmiges Trizepsdrücken am Kabelturm",sets:"je 2",reps:"10-12",rest:"-",tempo:"2/0/1/1",note:"Ohne Pausen im direkten Wechsel"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:77.5,rest:"2",tempo:"2/0/1/1"},
+    {name:"Latzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"3/1/1/1",note:"Negative Kadenz: 3 Sek."},
+    {name:"Hyperextensions",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:3,reps:"8-10",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Eingedrehte Bizepscurls KH",sets:2,reps:"8-10",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Hack Squats",sets:3,reps:"6-8",rest:"2",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"HIP Thrust",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/2",note:"2 Sek. Kontraktion halten"},
+    {name:"Wadenheben sitzend",sets:4,reps:"8-12",rest:"1",tempo:"2/1/1/1"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:77.5,rest:"2-3",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:3,reps:"12",rest:"1-2",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:4,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Enges Bankdrücken",sets:3,reps:"8-10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Einarmige Kick-Backs am Kabelturm",sets:"je 2",reps:"12",rest:"-",tempo:"2/0/1/1",note:"Links, rechts im direkten Wechsel ohne Pausen"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz als Dropsatz"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 2",reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]}
+]},
+// BLOCK 2 - WEEK 8
+{ block:2, week:8, label:"Woche 8", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:80,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-8",rest:"1",tempo:"2/1/1/1"},
+    {name:"Crunches",sets:2,reps:"12",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz als Myo Reps: kurze Pause, dann 3 Wdh. zusätzlich"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:80,rest:"3",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:80,rest:"2-3",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Trizeps Pushdowns mit dem Seil",sets:1,reps:"*",rest:"-",tempo:"1/1/1/0",note:"* 40 Wdh. in 4 Minuten"},
+    {name:"Einarmiges Trizepsdrücken am Kabelturm",sets:"je 2",reps:"10-12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:80,rest:"2",tempo:"2/0/1/1"},
+    {name:"Klimmzug",sets:3,reps:"6",rest:"2",tempo:"3/1/1/1",note:"Negative Kadenz: 3 Sek."},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextensions",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:3,reps:"8-10",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Eingedrehte Bizepscurls KH",sets:2,reps:"21",rest:"1-2",tempo:"1/0/1/1",note:"7 oben, 7 unten, 7 ganze"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Kniebeuge",sets:3,reps:"6",rest:"2-3",tempo:"2/1/1/1",note:"1½ Wiederholungen"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Abduktion",sets:3,reps:"12",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Wadenheben sitzend",sets:4,reps:"8-12",rest:"1",tempo:"2/1/1/1"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:80,rest:"3",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"6",rest:"2",tempo:"4/1/1/1",note:"Negative Kadenz: 4 Sek."},
+    {name:"Butterfly",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:4,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Trizeps Pushdowns mit Seil",sets:3,reps:"8-10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Kick-Backs am Kabelturm",sets:"je 2",reps:"12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 2",reps:"8",rest:"1-2",tempo:"1/0/1/1",note:"1½ Wiederholungen"}
+  ]}
+]},
+// BLOCK 2 - WEEK 9
+{ block:2, week:9, label:"Woche 9", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:4,reps:"6",pctOf:"kreuzheben",pct:82.5,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Back Off Satz Kreuzheben",sets:1,reps:"8",pctOf:"kreuzheben",pct:70,rest:"-",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"?",reps:"45",rest:"1",tempo:"1/0/1/1",note:"45 Gesamtwdh."},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-8",rest:"1",tempo:"2/1/1/1"},
+    {name:"Crunches",sets:2,reps:"12",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:4,reps:"6",pctOf:"bankdruecken",pct:82.5,rest:"3",tempo:"2/1/1/1",note:"Letzter Satz als AMRAP"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:4,reps:"6",pctOf:"ueberkopfdruecken",pct:82.5,rest:"2-3",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1",note:"Letzter Satz mit 2 Myo Reps Sätze: kurze Pause, dann 2x 3 Wdh. zusätzlich"},
+    {name:"Enges Bankdrücken",sets:3,reps:"8-10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Trizepsdrücken hinter dem Kopf mit Seil",sets:"je 3",reps:"10-12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:4,reps:"6",pctOf:"pendlayRows",pct:82.5,rest:"2-3",tempo:"2/0/1/1"},
+    {name:"Back Off Satz Pendlay Rows",sets:1,reps:"8",pctOf:"pendlayRows",pct:70,rest:"-",tempo:"2/0/1/1"},
+    {name:"Latzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextensions",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Eingedrehte Bizepscurls KH",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Hack Squats",sets:3,reps:"6-8",rest:"2",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"HIP Thrust",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Wadenheben sitzend",sets:1,reps:"*",rest:"-",tempo:"2/1/1/1",note:"* 40 Wdh. in 4 Minuten"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:4,reps:"6",pctOf:"schraegbankdruecken",pct:82.5,rest:"3",tempo:"2/1/1/1"},
+    {name:"Back Off Satz Schrägbankdrücken",sets:1,reps:"8",pctOf:"schraegbankdruecken",pct:70,rest:"2",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:4,reps:"10",rest:"1",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:3,reps:"12",rest:"1-2",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:4,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Trizeps Pushdowns mit Seil",sets:7,reps:"7",rest:"1-2",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:4,reps:"8",rest:"2",tempo:"2/1/1/1",note:"Letzter Satz als Dropsatz"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Seal Rows",sets:3,reps:"10",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:3,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Einarmige Bizepscurls am Kabelzug",sets:"je 3",reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]}
+]},
+// BLOCK 2 - WEEK 10 (Deload)
+{ block:2, week:10, label:"Woche 10 (Deload)", days:[
+  { title:"Tag 1 – Legs #1", exercises:[
+    {name:"Kreuzheben",sets:2,reps:"6",pctOf:"kreuzheben",pct:62.5,rest:"2-3",tempo:"2/1/1/0"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"1-2",tempo:"2/1/1/0"},
+    {name:"Beinbeuger liegend",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Einbeiniger Beinstrecker",sets:"je 3",reps:"8-10",rest:"1",tempo:"1/0/1/1"},
+    {name:"Ausfallschritte",sets:2,reps:"8-10",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Wadenheben stehend",sets:3,reps:"6-8",rest:"1",tempo:"2/1/1/1"}
+  ]},
+  { title:"Tag 2 – Push #1", exercises:[
+    {name:"Bankdrücken",sets:2,reps:"6",pctOf:"bankdruecken",pct:62.5,rest:"2",tempo:"2/1/1/1"},
+    {name:"Schrägbankdrücken KH",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Cable Flys",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Überkopfdrücken",sets:2,reps:"6",pctOf:"ueberkopfdruecken",pct:62.5,rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:3,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Frenchpress",sets:2,reps:"8-10",rest:"1-2",tempo:"1/1/1/0"},
+    {name:"Einarmiges Trizepsdrücken am Kabelturm",sets:"je 2",reps:"10-12",rest:"1",tempo:"2/0/1/1"}
+  ]},
+  { title:"Tag 3 – Pull #1", exercises:[
+    {name:"Pendlay Rows",sets:2,reps:"6",pctOf:"pendlayRows",pct:62.5,rest:"2",tempo:"2/0/1/1"},
+    {name:"Klimmzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"Kabelrudern eng",sets:3,reps:"8",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Hyperextensions",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Reverse Butterfly",sets:3,reps:"10-12",rest:"1-2",tempo:"2/0/1/0"},
+    {name:"Preacher Curls",sets:2,reps:"8-10",rest:"1",tempo:"2/0/1/1"},
+    {name:"Arnold Curls",sets:"je 2",reps:"8-10",rest:"1",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 4 – Legs #2", exercises:[
+    {name:"Hack Squats",sets:3,reps:"6-8",rest:"2",tempo:"2/1/1/1"},
+    {name:"GHD",sets:3,reps:"8",rest:"2",tempo:"2/0/1/1"},
+    {name:"Beinpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/0"},
+    {name:"Rum. Kreuzheben",sets:3,reps:"10-12",rest:"1-2",tempo:"2/1/1/1"},
+    {name:"Bulg. Split Squats",sets:2,reps:"8/Seite",rest:"1-2",tempo:"1/0/1/0"},
+    {name:"Abduktion",sets:3,reps:"12",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Beinheben",sets:2,reps:"10",rest:"1",tempo:"1/0/1/0"}
+  ]},
+  { title:"Tag 5 – Push #2", exercises:[
+    {name:"Schrägbankdrücken",sets:2,reps:"6",pctOf:"schraegbankdruecken",pct:62.5,rest:"2",tempo:"2/1/1/1"},
+    {name:"Brustpresse",sets:3,reps:"10",rest:"2",tempo:"2/1/1/1"},
+    {name:"Butterfly",sets:3,reps:"12",rest:"1",tempo:"1/1/1/1"},
+    {name:"Schulterdrücken KH",sets:3,reps:"8",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Seitheben",sets:4,reps:"10",rest:"1-2",tempo:"1/0/1/1"},
+    {name:"Trizeps Pushdowns mit Seil",sets:4,reps:"8-10",rest:"1-2",tempo:"1/0/1/1"}
+  ]},
+  { title:"Tag 6 – Pull #2", exercises:[
+    {name:"Latzug",sets:3,reps:"8",rest:"2",tempo:"2/1/1/1"},
+    {name:"T-Bar Rudern eng/breit",sets:"2/2",reps:"8",rest:"2",tempo:"1/0/1/1"},
+    {name:"Überzüge",sets:2,reps:"15",rest:"1-2",tempo:"2/0/1/1"},
+    {name:"Hyperextension",sets:3,reps:"10",rest:"1",tempo:"1/0/1/0"},
+    {name:"Facepulls",sets:4,reps:"12",rest:"1",tempo:"1/0/1/1"},
+    {name:"Hammercurls",sets:4,reps:"10",rest:"1",tempo:"1/0/1/1"}
+  ]}
+]}
+]; // end weeks array
+
+// ===== RENDER =====
+const app = document.getElementById('app');
+
+function renderApp() {
+  let html = `<div class="rm-summary">
+    <h2>Meine 1RM Werte</h2>
+    <div class="rm-grid">
+      <div class="rm-card"><span class="rm-label">Kreuzheben</span><span class="rm-val">${oneRM.kreuzheben} kg</span></div>
+      <div class="rm-card"><span class="rm-label">Bankdrücken</span><span class="rm-val">${oneRM.bankdruecken} kg</span></div>
+      <div class="rm-card"><span class="rm-label">Überkopfdrücken</span><span class="rm-val">${oneRM.ueberkopfdruecken} kg</span></div>
+      <div class="rm-card"><span class="rm-label">Pendlay Rows</span><span class="rm-val">${oneRM.pendlayRows} kg</span></div>
+      <div class="rm-card"><span class="rm-label">Schrägbankdrücken</span><span class="rm-val">${oneRM.schraegbankdruecken} kg</span></div>
+      <div class="rm-card"><span class="rm-label">Kniebeuge</span><span class="rm-val">${oneRM.kniebeuge} kg</span></div>
+    </div>
+  </div>`;
+
+  // Week tabs
+  html += `<div class="week-nav">`;
+  weeks.forEach((w, i) => {
+    const cls = i === 0 ? 'week-tab active' : 'week-tab';
+    const deload = w.label.includes('Deload') ? ' deload' : '';
+    html += `<button class="${cls}${deload}" onclick="showWeek(${i})" id="tab-${i}">
+      <span class="wk-num">W${w.week}</span>
+      <span class="wk-block">Block ${w.block}</span>
+    </button>`;
+  });
+  html += `</div>`;
+
+  // Week content
+  weeks.forEach((w, wi) => {
+    const display = wi === 0 ? 'block' : 'none';
+    html += `<div class="week-content" id="week-${wi}" style="display:${display}">`;
+    html += `<div class="week-header"><h2>Block #${w.block} — ${w.label}</h2></div>`;
+
+    w.days.forEach(day => {
+      html += `<div class="day-card">`;
+      html += `<div class="day-title">${day.title}</div>`;
+      html += `<table class="ex-table"><thead><tr>
+        <th class="col-ex">Übung</th><th class="col-s">Sätze</th><th class="col-r">Wdh.</th>
+        <th class="col-kg">Gewicht</th><th class="col-p">Pause (min)</th><th class="col-t">Tempo</th><th class="col-n">Notiz</th>
+      </tr></thead><tbody>`;
+
+      day.exercises.forEach(ex => {
+        let kgStr = '-';
+        if (ex.pctOf && ex.pct) {
+          const kg = pct(ex.pctOf, ex.pct);
+          kgStr = `<span class="kg-val">${kg} kg</span> <span class="pct-badge">${ex.pct}%</span>`;
+        }
+        const noteStr = ex.note ? `<span class="note-text">${ex.note}</span>` : '';
+        html += `<tr>
+          <td class="col-ex">${ex.name}</td>
+          <td class="col-s">${ex.sets}</td>
+          <td class="col-r">${ex.reps}</td>
+          <td class="col-kg">${kgStr}</td>
+          <td class="col-p">${ex.rest}</td>
+          <td class="col-t"><code>${ex.tempo}</code></td>
+          <td class="col-n">${noteStr}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    });
+    html += `</div>`;
+  });
+
+  app.innerHTML = html;
+}
+
+function showWeek(idx) {
+  document.querySelectorAll('.week-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.week-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('week-' + idx).style.display = 'block';
+  document.getElementById('tab-' + idx).classList.add('active');
+}
+
+renderApp();
+
+</script>
+<style>
+  .rm-summary { padding: 20px 24px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .rm-summary h2 { font-size: 16px; color: var(--muted); margin-bottom: 12px; font-weight: 600; }
+  .rm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .rm-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+  .rm-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .rm-val { display: block; font-size: 20px; font-weight: 700; color: var(--accent2); }
+
+  .week-nav { display: flex; gap: 4px; padding: 16px 24px; overflow-x: auto; background: var(--card);
+    border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .week-tab { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px;
+    cursor: pointer; color: var(--text); text-align: center; min-width: 60px; transition: all 0.2s; }
+  .week-tab:hover { border-color: var(--accent); }
+  .week-tab.active { background: var(--accent); border-color: var(--accent); }
+  .week-tab.deload { border-color: var(--green); }
+  .week-tab.deload.active { background: var(--green); }
+  .wk-num { display: block; font-size: 15px; font-weight: 700; }
+  .wk-block { display: block; font-size: 10px; color: rgba(255,255,255,0.6); }
+
+  .week-content { padding: 20px 24px; }
+  .week-header h2 { font-size: 20px; margin-bottom: 16px; color: var(--accent2); }
+
+  .day-card { background: var(--card); border-radius: 10px; margin-bottom: 20px; overflow: hidden;
+    border: 1px solid var(--border); }
+  .day-title { background: linear-gradient(135deg, var(--accent), #8e1a1a); padding: 12px 16px;
+    font-size: 16px; font-weight: 700; }
+
+  .ex-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ex-table thead { background: rgba(0,0,0,0.3); }
+  .ex-table th { padding: 8px 10px; text-align: left; font-weight: 600; color: var(--muted); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px; }
+  .ex-table td { padding: 8px 10px; border-top: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+  .ex-table tr:hover { background: rgba(255,255,255,0.03); }
+
+  .col-ex { min-width: 180px; font-weight: 500; }
+  .col-s, .col-r, .col-p { text-align: center; width: 60px; }
+  .col-kg { min-width: 120px; }
+  .col-t { width: 80px; }
+  .col-n { min-width: 140px; font-size: 11px; }
+
+  .kg-val { font-weight: 700; color: var(--yellow); font-size: 14px; }
+  .pct-badge { background: rgba(243,156,18,0.2); color: var(--yellow); padding: 1px 6px; border-radius: 4px;
+    font-size: 10px; font-weight: 600; margin-left: 4px; }
+  .note-text { color: var(--blue); font-style: italic; }
+  code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 3px; font-size: 12px; color: var(--muted); }
+
+  @media (max-width: 768px) {
+    .header { padding: 16px; }
+    .header h1 { font-size: 20px; }
+    .rm-summary { padding: 14px; }
+    .rm-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .rm-card { padding: 8px; }
+    .rm-label { font-size: 10px; }
+    .rm-val { font-size: 16px; }
+    .week-nav { padding: 10px 8px; gap: 3px; }
+    .week-tab { padding: 6px 10px; min-width: 50px; }
+    .wk-num { font-size: 13px; }
+    .wk-block { font-size: 9px; }
+    .week-content { padding: 10px; }
+    .week-header h2 { font-size: 16px; }
+    .day-card { margin-bottom: 14px; }
+    .day-title { padding: 10px 12px; font-size: 14px; }
+    .ex-table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ex-table thead, .ex-table tbody, .ex-table tr { display: table; width: 100%; table-layout: auto; }
+    .col-ex { min-width: 110px; font-size: 11px; }
+    .col-s, .col-r, .col-p { width: 40px; font-size: 11px; }
+    .col-kg { min-width: 90px; }
+    .col-t { width: 65px; }
+    .col-n { min-width: 100px; font-size: 10px; }
+    .kg-val { font-size: 12px; }
+    .pct-badge { font-size: 9px; padding: 1px 4px; }
+  }
+  @media (max-width: 420px) {
+    .rm-grid { grid-template-columns: repeat(2, 1fr); }
+    .ex-table th, .ex-table td { padding: 6px 5px; }
+  }
+  /* iOS safe area */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    body { padding-bottom: env(safe-area-inset-bottom); }
+    .week-nav { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  }
+  /* Add to home screen PWA feel */
+  @media (display-mode: standalone) {
+    .header { padding-top: 48px; }
+  }
+</style>
+</body>
+</html>
